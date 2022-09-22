@@ -7,21 +7,23 @@ pub use types::CommandType;
 const HELP: &str = r#"Still not sure what this package will do! :P
 
 Usage:
-    jutsu [OPTION]...
-    eg: jutsu -i 192.168.1.10 -e restart --unsafe
+    jutsu -i <ipv4_address> [OPTIONS]...
+    eg: jutsu -i 192.168.1.10 --info
 
 Options:
-    -i, --ip-address      Target client's ipv4 address.
+    -i, --ip-address      Target client's ipv4 address. [REQUIRED]
     -f, --find            Find a client by session username.
+    --info                Get client system info.
 
 Copyrights © 2022 joshuajosephmyers.com. All rights reserved. 
 "#;
 
-const IP_EXAMPLE: &str = r#"Ip address (-i, --ip-address) requires a value.
+const IP_EXAMPLE: &str = r#"
 
 Example:
-    jutsu -i 192.168.1.10      [one client]
-    jutsu -i 192.168.1.10-50   [many client(s)]
+    jutsu -i 192.168.1.10        [one client]
+    jutsu -i 192.168.1.50-100    [many client(s)]
+    jutsu -i 192.168.1.5,10,15   [selected client(s)]
 "#;
 
 const DUPLICATE_IP: &str = r#"Duplicate ip address (-i, --ip-address) commands found. Did you mean to pass an ip range?
@@ -82,6 +84,12 @@ pub fn show_help() -> !
     process::exit(0)
 }
 
+pub fn show_example_ip(message: &str) -> !
+{
+    println!("{message}{IP_EXAMPLE}");
+    process::exit(0)
+}
+
 fn from_arg(args: &Vec<String>, argument: &String, index: usize) -> Option<Command> {
     match argument.as_str() {
         "-h" | "--help" => Some(Command {arg: "--help".to_string(), value: None}),
@@ -99,7 +107,7 @@ fn from_arg(args: &Vec<String>, argument: &String, index: usize) -> Option<Comma
             allow_once(args, Some("-i"), Some("--ip-address"), DUPLICATE_IP.to_string());
             let val = match args.get(index + 1) {
                 Some(v) => is_value(argument, v),
-                None => error(IP_EXAMPLE.to_string()),
+                None => show_example_ip("Ip address (-i, --ip-address) requires a value."),
             };
             Some(Command {arg: "--ip-address".to_string(), value: Some(val.clone())})
         },

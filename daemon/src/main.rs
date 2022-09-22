@@ -1,6 +1,7 @@
 use std::net;
 
 use jutsu_cli::{Cli,CommandType};
+use jutsu_core::{Datagram, Find};
 
 
 fn main() -> std::io::Result<()> {
@@ -12,6 +13,8 @@ fn main() -> std::io::Result<()> {
 
         let cli = Cli::new();
         
+        let mut datagram = Datagram::new();
+
         cli
         .commands()
         .iter()
@@ -19,11 +22,22 @@ fn main() -> std::io::Result<()> {
             match command.to_type() {
                 CommandType::Find =>
                 {
-                    println!("Find user {:?} : IP {:?}", command.value(), cli.targets());
+                    if let Some(find) = command.value()
+                    {
+                        datagram.push(Box::new(Find::new(find.clone())));
+                    }
+                    
+                    println!("Find {:?}", command.value());
+                    println!("Find {:?}", datagram.data(0));
+                },
+                CommandType::IpAddress => 
+                {
+                    println!("IpAddress {:?}", cli.targets());
                 },
                 CommandType::Info => 
                 {
-                    println!("Info");
+                    // socket.send_to(datagram.data(), net::SocketAddrV4::new(*ipv4, 34254));
+                    println!("Info {:?}", command.value());
                 },
                 CommandType::Help => Cli::show_help(),
                 _ => {}

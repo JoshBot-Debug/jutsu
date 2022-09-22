@@ -1,13 +1,13 @@
 mod command;
 
-use std::{net::Ipv4Addr, process};
+use std::net;
 
 pub use command::{Command, CommandType};
 
 #[derive(Debug, Default)]
 pub struct Cli
 {
-    targets: Vec<Ipv4Addr>,
+    targets: Vec<net::Ipv4Addr>,
     commands: Vec<Command>
 }
 
@@ -23,7 +23,7 @@ impl Cli {
         Self { commands, targets }
     }
 
-    pub fn targets(&self) -> &Vec<Ipv4Addr>
+    pub fn targets(&self) -> &Vec<net::Ipv4Addr>
     {
         &self.targets
     }
@@ -39,7 +39,7 @@ impl Cli {
 }
 
 
-fn parse_target_ipv4<'a>(commands: &Vec<Command>, targets: &mut Vec<Ipv4Addr>)
+fn parse_target_ipv4<'a>(commands: &Vec<Command>, targets: &mut Vec<net::Ipv4Addr>)
 {
     for command in commands.iter()
     {
@@ -48,7 +48,7 @@ fn parse_target_ipv4<'a>(commands: &Vec<Command>, targets: &mut Vec<Ipv4Addr>)
             match command.value() {
                 Some(ip_string) =>
                 {
-                    match ip_string.parse::<Ipv4Addr>() {
+                    match ip_string.parse::<net::Ipv4Addr>() {
                         Ok(ip_address) => targets.push(ip_address),
                         Err(_) =>
                         {
@@ -67,21 +67,20 @@ fn parse_target_ipv4<'a>(commands: &Vec<Command>, targets: &mut Vec<Ipv4Addr>)
     }
 }
 
-fn parse_ip_comma(ip_string: &String, targets: &mut Vec<Ipv4Addr>)
+fn parse_ip_comma(ip_string: &String, targets: &mut Vec<net::Ipv4Addr>)
 {
     let range: Vec<&str> = ip_string.split(",").collect();
 
-    let first = match range.get(0) {
-        None => error(format!("Invalid ipv4 address.").as_str()),
-        Some(v) =>
-            match v.parse::<Ipv4Addr>() {
-                Ok(v) =>
-                {
-                    targets.push(v);
-                    v.octets()
-                },
-                Err(_) => error(format!("{v} is not a valid ipv4 address.").as_str())
-            }
+    let first = match range
+    .get(0)
+    .unwrap()
+    .parse::<net::Ipv4Addr>() {
+        Ok(v) =>
+        {
+            targets.push(v);
+            v.octets()
+        },
+        Err(_) => command::show_example_ip(format!("{ip_string} is not a valid ipv4 address. Use one of the patterns below.").as_str())
     };
 
 
@@ -89,18 +88,23 @@ fn parse_ip_comma(ip_string: &String, targets: &mut Vec<Ipv4Addr>)
     {
         if i == 0 { continue; }
         match s.parse::<u8>() {
-            Ok(v) => targets.push(Ipv4Addr::new(first[0], first[1], first[2], v)),
-            Err(_) => error(format!("{ip_string} contains an invalid ipv4 addresses.").as_str())
+            Ok(v) => targets.push(net::Ipv4Addr::new(first[0], first[1], first[2], v)),
+            Err(_) => command::show_example_ip(format!("The ipv4 address ({ip_string}) provided is invalid. Use one of the patterns below.").as_str())
         }
-        
     }
 }
 
-fn parse_ip_range(ip_string: &String, targets: &mut Vec<Ipv4Addr>)
+fn parse_ip_range(ip_string: &String, targets: &mut Vec<net::Ipv4Addr>)
 {
     let range: Vec<&str> = ip_string.split("-").collect();
                                     
-    let first = parse_ip_string(&range);
+    let first = match range
+    .get(0)
+    .unwrap()
+    .parse::<net::Ipv4Addr>() {
+        Ok(v) => v.octets(),
+        Err(_) => command::show_example_ip(format!("The ipv4 address ({ip_string}) provided is invalid. Use one of the patterns below.").as_str())
+    };
 
     let start = range
     .get(0)
@@ -116,26 +120,61 @@ fn parse_ip_range(ip_string: &String, targets: &mut Vec<Ipv4Addr>)
     .get(1)
     .unwrap()
     .parse::<u8>()
-    .unwrap_or_else(|_| error(format!("{ip_string} is not a valid ipv4 address range.").as_str()));
+    .unwrap_or_else(|_| command::show_example_ip(format!("The ipv4 address ({ip_string}) provided is invalid. Use one of the patterns below.").as_str()));
 
     for i in start..=end {
-        targets.push(Ipv4Addr::new(first[0], first[1], first[2], i.try_into().unwrap()))
+        targets.push(net::Ipv4Addr::new(first[0], first[1], first[2], i.try_into().unwrap()))
     }
 }
 
-fn parse_ip_string(range: &Vec<&str>) -> [u8; 4]
-{
-    match range.get(0) {
-        None => error(format!("Invalid ipv4 address.").as_str()),
-        Some(v) =>
-            match v.parse::<Ipv4Addr>() {
-                Ok(v) => v.octets(),
-                Err(_) => error(format!("{v} is not a valid ip address.").as_str())
-            }
-    }
-}
 
-fn error(message: &str) -> ! {
-    eprintln!("{message}");
-    process::exit(1)
+#[cfg(test)]
+mod tests {
+    use std::net;
+    use crate::{parse_target_ipv4, Command};
+
+
+    #[test]
+    fn ip_address_empty() {
+        
+        let mut targets: Vec<net::Ipv4Addr> = Vec::new();
+        let command: Vec<Command> = vec![
+            Command::new("--ip-address".to_string(), None)
+        ];
+
+        parse_target_ipv4(&command, &mut targets);
+    }
+
+    #[test]
+    fn ip_address_invalid() {
+        
+        let mut targets: Vec<net::Ipv4Addr> = Vec::new();
+        let command: Vec<Command> = vec![
+            Command::new("--ip-address".to_string(), Some("192.168.1.a".to_string()))
+        ];
+
+        parse_target_ipv4(&command, &mut targets);
+    }
+
+    #[test]
+    fn ip_address_invalid_comma() {
+        
+        let mut targets: Vec<net::Ipv4Addr> = Vec::new();
+        let command: Vec<Command> = vec![
+            Command::new("--ip-address".to_string(), Some("192.168.1.1,as".to_string()))
+        ];
+
+        parse_target_ipv4(&command, &mut targets);
+    }
+
+    #[test]
+    fn ip_address_invalid_range() {
+        
+        let mut targets: Vec<net::Ipv4Addr> = Vec::new();
+        let command: Vec<Command> = vec![
+            Command::new("--ip-address".to_string(), Some("192.168.1.1-256".to_string()))
+        ];
+
+        parse_target_ipv4(&command, &mut targets);
+    }
 }

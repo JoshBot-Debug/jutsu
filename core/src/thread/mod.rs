@@ -34,7 +34,6 @@ impl ThreadPool
         F: FnOnce() + Send + 'static
     {
         let job = Box::new(f);
-
         self.sender.as_ref().unwrap().send(job).unwrap();
     }
 }
@@ -42,7 +41,6 @@ impl ThreadPool
 impl Drop for ThreadPool {
     fn drop(&mut self) {
         drop(self.sender.take());
-
         for worker in &mut self.workers
         {
             if let Some(thread) = worker.thread.take()
@@ -64,17 +62,12 @@ impl Worker
     fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Job>>>) -> Worker
     {
         let thread = thread::spawn(move || loop {
-            let message = receiver.lock().unwrap().recv();
-
-            match message {
-                Ok(job) =>
-                {
-                    job();
-                }
-                Err(_) =>
-                {
-                    break;
-                }
+            match receiver
+            .lock()
+            .unwrap()
+            .recv() {
+                Ok(job) => job(),
+                Err(_) => break
             }
         });
         Worker { _id: id, thread: Some(thread) }
