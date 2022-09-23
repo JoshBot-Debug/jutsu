@@ -1,6 +1,6 @@
 # USAGE
 
-## Get Client Info
+## Get client info
 Returns client's system info
 #### Command:
 	jutsu -i 192.168.1.1 --info
@@ -12,7 +12,7 @@ Returns client's system info
 	IpAddress, Hostname, Session, CPU, RAM
 
 
-## Get Client By IPV4 Address
+## Get client by user session
 Searches a client for the specified username where a session is active.
 #### Command:
 	jutsu -i 192.168.1.1-255 -f <username> --info
