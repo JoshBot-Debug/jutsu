@@ -1,8 +1,7 @@
 # USAGE
 
 ## Get Client Info
->Returns client's system info
----
+Returns client's system info
 
 ### Command:
 	jutsu -i 192.168.1.1 --info
@@ -16,8 +15,7 @@
 
 
 ## Get Client By IPV4 Address
->Searches a client for the specified username where a session is active.
----
+Searches a client for the specified username where a session is active.
 
 ### Command:
 	jutsu -i 192.168.1.1-255 -f <username> --info
@@ -26,8 +24,7 @@
 
 
 ## Deploy a client via SSH
->Installs a client via ssh
----
+Installs a client via ssh
 
 ### Command:
 	jutsu --deploy joshua@192.168.1.1-255
