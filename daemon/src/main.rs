@@ -1,69 +1,55 @@
 use std::net;
 
-use jutsu_cli::{Cli,CommandType};
-use jutsu_core::{Datagram, Find};
-
+use jutsu_cli::{Cli, CommandType};
+use jutsu_core::{Datagram, DATAGRAM_CHUNK, Find, Info};
 
 fn main() -> std::io::Result<()> {
     {
         let socket = match net::UdpSocket::bind("0.0.0.0:34255") {
             Ok(v) => v,
-            Err(_) => error("Failed to bind socket on 0.0.0.0:34255")
+            Err(_) => error("Failed to bind socket on 0.0.0.0:34255"),
         };
 
         let cli = Cli::new();
-        
+
         let mut datagram = Datagram::new();
 
-        cli
-        .commands()
-        .iter()
-        .for_each(|command| {
-            match command.to_type() {
-                CommandType::Find =>
-                {
-                    if let Some(find) = command.value()
-                    {
-                        datagram.push(Box::new(Find::new(find.clone())));
+        cli.commands()
+            .iter()
+            .for_each(|command| match command.to_type() {
+                CommandType::Find => {
+                    if let Some(find) = command.value() {
+                        datagram.push(Find::new(find));
+                        println!("Find {:?}", find);
                     }
-                    
-                    println!("Find {:?}", command.value());
-                    println!("Find {:?}", datagram.data(0));
-                },
-                CommandType::IpAddress => 
-                {
+                }
+                CommandType::IpAddress => {
                     println!("IpAddress {:?}", cli.targets());
-                },
-                CommandType::Info => 
-                {
-                    // socket.send_to(datagram.data(), net::SocketAddrV4::new(*ipv4, 34254));
+                }
+                CommandType::Info => {
+                    datagram.push(Info::new());
                     println!("Info {:?}", command.value());
-                },
+                }
                 CommandType::Help => Cli::show_help(),
                 _ => {}
-            }
+            });
+
+        let buf = datagram.buf();
+
+        cli.targets().iter().enumerate().for_each(|(_, to)| {
+            buf.chunks(DATAGRAM_CHUNK).for_each(|chunk| {
+
+                println!("{:?}", chunk);
+                let sent = socket.send_to(chunk, net::SocketAddrV4::new(*to, 34254));
+
+                if let Ok(size) = sent {
+                    dbg!(&to, size);
+                }
+
+            });
         });
 
-        // cli
-        // .targets()
-        // .iter()
-        // .enumerate()
-        // .for_each(|(index, ipv4)| {
-            
-        //     let buf: [u8; 16] = [index.try_into().unwrap(); 16];
-
-        //     let _sent = socket.send_to(&buf, net::SocketAddrV4::new(*ipv4, 34254));
-            
-        //     // if let Ok(size) = sent
-        //     // {
-        //     //     // println!("{size}")
-        //     // }
-        // });
-
-
-
         // dbg!(&cli.execute);
-
 
         // let execute = match Execute::from_str(&cli.execute.unwrap()) {
         //     Ok(e) => e,
@@ -96,7 +82,7 @@ fn main() -> std::io::Result<()> {
 
         // dbg!(&packet);
     }
-    
+
     Ok(())
 }
 

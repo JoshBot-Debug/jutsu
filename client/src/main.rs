@@ -1,4 +1,4 @@
-use jutsu_core::ThreadPool;
+use jutsu_core::{ThreadPool, DATAGRAM_CHUNK};
 use std::{net, process};
 
 
@@ -13,12 +13,13 @@ fn main() -> std::io::Result<()> {
             }
         };
 
-        let mut buf = [0; 16];
 
-        let pool = ThreadPool::new(2);
+        let pool = ThreadPool::new(32);
 
         loop {
-            let message = match socket.recv_from(&mut buf) {
+            let mut chunk = [0; DATAGRAM_CHUNK];
+
+            let message = match socket.recv_from(&mut chunk) {
                 Ok(v) => v,
                 Err(_) =>
                 {
@@ -28,7 +29,7 @@ fn main() -> std::io::Result<()> {
             };
     
             pool.execute(move || {
-                println!("{:?}", buf);
+                println!("{:?}", chunk);
                 dbg!(message);
             });
         }

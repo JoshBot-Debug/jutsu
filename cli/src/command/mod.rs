@@ -114,8 +114,8 @@ fn from_arg(args: &Vec<String>, argument: &String, index: usize) -> Option<Comma
         "--info" => Some(Command {arg: "--info".to_string(), value: None}),
         _ => {
             if argument.starts_with("-") {
-                eprintln!("Invalid command {}", argument);
-                process::exit(1)
+                eprintln!("Invalid command {}\n", argument);
+                show_help()
             }
             None
         }
