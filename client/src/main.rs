@@ -19,19 +19,20 @@ fn main() -> std::io::Result<()> {
         loop {
             let mut chunk = [0; DATAGRAM_CHUNK];
 
-            let message = match socket.recv_from(&mut chunk) {
-                Ok(v) => v,
-                Err(_) =>
+            match socket.recv_from(&mut chunk) {
+                Ok(_) => 
                 {
-                    eprintln!("Failed to receive packet.");
-                    process::exit(1)
-                }
-            };
-    
-            pool.execute(move || {
-                println!("{:?}", chunk);
-                dbg!(message);
-            });
+                    pool.execute(move || {
+                        println!("{:?}", chunk);
+                    });
+                },
+                Err(_) => error("Failed to receive packet.")
+            }
         }
     }
+}
+
+fn error(message: &str) -> ! {
+    eprintln!("{message}");
+    std::process::exit(1)
 }
