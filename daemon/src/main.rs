@@ -3,11 +3,13 @@ use std::net;
 use jutsu_cli::{Cli, CommandType};
 use jutsu_core::{Datagram, DATAGRAM_CHUNK, Find, Info};
 
+const DAEMON_PORT: &str = "0.0.0.0:34255";
+
 fn main() -> std::io::Result<()> {
     {
-        let socket = match net::UdpSocket::bind("0.0.0.0:34255") {
+        let socket = match net::UdpSocket::bind(DAEMON_PORT) {
             Ok(v) => v,
-            Err(_) => error("Failed to bind socket on 0.0.0.0:34255"),
+            Err(_) => error(format!("Failed to bind socket on {DAEMON_PORT}").as_str()),
         };
 
         let cli = Cli::new();
@@ -38,7 +40,6 @@ fn main() -> std::io::Result<()> {
 
         cli.targets().iter().enumerate().for_each(|(_, to)| {
             buf.chunks(DATAGRAM_CHUNK).for_each(|chunk| {
-
                 println!("{:?}", chunk);
                 let sent = socket.send_to(chunk, net::SocketAddrV4::new(*to, 34254));
 

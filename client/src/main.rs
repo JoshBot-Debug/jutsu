@@ -1,16 +1,13 @@
 use jutsu_core::{ThreadPool, DATAGRAM_CHUNK};
-use std::{net, process};
+use std::net;
 
+const CLIENT_PORT: &str = "0.0.0.0:34254";
 
 fn main() -> std::io::Result<()> {
     {
-        let socket = match net::UdpSocket::bind("0.0.0.0:34254") {
+        let socket = match net::UdpSocket::bind(CLIENT_PORT) {
             Ok(v) => v,
-            Err(_) =>
-            {
-                eprintln!("Failed to bind socket on 0.0.0.0:34254");
-                process::exit(1)
-            }
+            Err(_) => error(format!("Failed to bind socket on {CLIENT_PORT}").as_str())
         };
 
 
@@ -20,11 +17,9 @@ fn main() -> std::io::Result<()> {
             let mut chunk = [0; DATAGRAM_CHUNK];
 
             match socket.recv_from(&mut chunk) {
-                Ok(_) => 
+                Ok((size, from)) => 
                 {
-                    pool.execute(move || {
-                        println!("{:?}", chunk);
-                    });
+                    pool.execute(move || { println!("{size} {from} {:?}", chunk) });
                 },
                 Err(_) => error("Failed to receive packet.")
             }
