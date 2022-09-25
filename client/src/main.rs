@@ -10,7 +10,6 @@ fn main() -> std::io::Result<()> {
             Err(_) => error(format!("Failed to bind socket on {CLIENT_PORT}").as_str())
         };
 
-
         let pool = ThreadPool::new(32);
 
         loop {

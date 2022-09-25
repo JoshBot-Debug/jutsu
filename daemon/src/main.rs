@@ -40,6 +40,13 @@ fn main() -> std::io::Result<()> {
 
         cli.targets().iter().enumerate().for_each(|(_, to)| {
             buf.chunks(DATAGRAM_CHUNK).for_each(|chunk| {
+                
+                if let Some(data) = chunk.get(0)
+                {
+                    println!("data {:?}", format!("{data:b}"));
+                    println!("data {:b}", data);
+                }
+
                 println!("{:?}", chunk);
                 let sent = socket.send_to(chunk, net::SocketAddrV4::new(*to, 34254));
 
