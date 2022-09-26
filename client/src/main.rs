@@ -1,4 +1,4 @@
-use jutsu_core::DATAGRAM_SIZE;
+use jutsu_core::{DATAGRAM_SIZE, Find};
 use std::net;
 
 const CLIENT_PORT: &str = "0.0.0.0:34254";
@@ -11,12 +11,40 @@ fn main() -> std::io::Result<()> {
         };
 
         loop {
-            let mut buf = [0; DATAGRAM_SIZE];
+            let mut buf = vec![0; DATAGRAM_SIZE];
 
             match socket.recv_from(&mut buf) {
-                Ok((size, from)) => 
+                Ok((_, from)) => 
                 {
-                    println!("{size} {from} {:?}", buf);
+                    // dbg!(&buf);
+                    dbg!(from);
+
+                    // let find = Find::from_buf(&buf).unwrap();
+                    let find = Find::result_from_buf(&buf).unwrap();
+                    dbg!(&find);
+
+                    // let t = buf.get(0);
+
+                    // if let Some(t) = t
+                    // {
+                    //    dbg!(t);
+
+                    //    if let Some(ts) = buf.get(2)
+                    //    {
+                    //         dbg!(ts);
+
+                    //         if let Some(td) = buf.get(3..(3+ts).into())
+                    //         {
+                    //             dbg!(td);
+                    //             let td_as_string = String::from_utf8(td.to_vec());
+                                
+                    //             if let Ok(td_as_string) = td_as_string
+                    //             {
+                    //                 dbg!(td_as_string);
+                    //             }
+                    //         }
+                    //    }
+                    // }
                 },
                 Err(_) => error("Failed to receive packet.")
             }

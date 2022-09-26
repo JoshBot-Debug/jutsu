@@ -19,15 +19,21 @@ impl Datagram {
     }
 
     pub fn buf(&mut self) -> Vec<u8> {
-        let mut size = size(self.payload.len());
-        let mut buf = Vec::with_capacity(self.payload.len() + size.len());
-        buf.append(&mut size);
+        let mut buf = Vec::with_capacity(self.payload.len());
         buf.append(&mut self.payload);
         buf
     }
+
+    // pub fn buf(&mut self) -> Vec<u8> {
+    //     let mut size = size(self.payload.len());
+    //     let mut buf = Vec::with_capacity(self.payload.len() + size.len());
+    //     buf.append(&mut size);
+    //     buf.append(&mut self.payload);
+    //     buf
+    // }
 }
 
-fn size(length: usize) -> Vec<u8> {
+fn _size(length: usize) -> Vec<u8> {
     let size = ((length - 1) / 255) + 1;
 
     let mut result = Vec::with_capacity(size);

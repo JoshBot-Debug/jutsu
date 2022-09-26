@@ -36,7 +36,6 @@ fn main() -> std::io::Result<()> {
                 _ => {}
             });
 
-            println!("{:?}", "i".as_bytes());
         let buf = datagram.buf();
 
         cli.targets().iter().enumerate().for_each(|(_, to)| {
