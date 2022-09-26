@@ -1,7 +1,7 @@
 use std::net;
 
 use jutsu_cli::{Cli, CommandType};
-use jutsu_core::{Datagram, DATAGRAM_CHUNK, Find, Info};
+use jutsu_core::{Datagram, Find, Info};
 
 const DAEMON_PORT: &str = "0.0.0.0:34255";
 
@@ -36,25 +36,15 @@ fn main() -> std::io::Result<()> {
                 _ => {}
             });
 
+            println!("{:?}", "i".as_bytes());
         let buf = datagram.buf();
 
         cli.targets().iter().enumerate().for_each(|(_, to)| {
-            buf.chunks(DATAGRAM_CHUNK).for_each(|chunk| {
-                
-                if let Some(data) = chunk.get(0)
-                {
-                    println!("data {:?}", format!("{data:b}"));
-                    println!("data {:b}", data);
-                }
+            let sent = socket.send_to(&buf, net::SocketAddrV4::new(*to, 34254));
 
-                println!("{:?}", chunk);
-                let sent = socket.send_to(chunk, net::SocketAddrV4::new(*to, 34254));
-
-                if let Ok(size) = sent {
-                    dbg!(&to, size);
-                }
-
-            });
+            if let Ok(size) = sent {
+                dbg!(&to, size);
+            }
         });
     }
 

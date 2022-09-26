@@ -1,4 +1,4 @@
-use jutsu_core::{ThreadPool, DATAGRAM_CHUNK};
+use jutsu_core::DATAGRAM_SIZE;
 use std::net;
 
 const CLIENT_PORT: &str = "0.0.0.0:34254";
@@ -10,15 +10,13 @@ fn main() -> std::io::Result<()> {
             Err(_) => error(format!("Failed to bind socket on {CLIENT_PORT}").as_str())
         };
 
-        let pool = ThreadPool::new(32);
-
         loop {
-            let mut chunk = [0; DATAGRAM_CHUNK];
+            let mut buf = [0; DATAGRAM_SIZE];
 
-            match socket.recv_from(&mut chunk) {
+            match socket.recv_from(&mut buf) {
                 Ok((size, from)) => 
                 {
-                    pool.execute(move || { println!("{size} {from} {:?}", chunk) });
+                    println!("{size} {from} {:?}", buf);
                 },
                 Err(_) => error("Failed to receive packet.")
             }

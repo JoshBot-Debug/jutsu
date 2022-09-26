@@ -5,12 +5,12 @@ pub struct Datagram {
     payload: Vec<u8>,
 }
 
-pub const DATAGRAM_CHUNK: usize = 6;
+pub const DATAGRAM_SIZE: usize = 32;
 
 impl Datagram {
     pub fn new() -> Self {
         Self {
-            payload: Vec::with_capacity(8),
+            payload: Vec::with_capacity(DATAGRAM_SIZE),
         }
     }
 

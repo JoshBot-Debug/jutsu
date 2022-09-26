@@ -4,7 +4,7 @@ pub struct Info;
 
 impl Segment for Info {
     fn data(&self) -> Vec<u8> {
-        vec![4, 105, 110, 102, 111]
+        vec![105,0]
     }
 }
 

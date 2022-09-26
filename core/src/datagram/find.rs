@@ -20,7 +20,7 @@ impl Segment for Find {
 
         let mut buf = self.value.clone().into_bytes();
 
-        data.push(length);
+        data.append(&mut [102, 0, length].into());
         data.append(&mut buf);
         data
     }
