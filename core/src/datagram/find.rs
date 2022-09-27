@@ -1,64 +1,51 @@
-use std::fmt::Error;
+use crate::string_trail;
 
 use super::Segment;
 
 #[derive(Debug)]
 pub struct Find(String);
 
+const USERNAME_MAX_LENGTH: usize = 32;
+
 const FIND_BUF: u8 = 102;
 
 impl Segment for Find {
-    fn data(&self) -> Vec<u8> {
-        let length = match u8::try_from(self.0.len()) {
-            Ok(v) => {
-                if v > 254 {
-                    error("Find has too many characters. Maximum is 254".to_string())
-                }
-                v
-            }
-            Err(_) => error("Find has too many characters. Maximum is 254".to_string()),
-        };
-
-        let mut data = Vec::with_capacity(length.into());
-
-        let mut buf = self.0.clone().into_bytes();
-
-        data.append(&mut [FIND_BUF, 0, length].into());
-        data.append(&mut buf);
-        data
+    fn buf(&self) -> Vec<u8> {
+        let mut bytes = self.0.as_bytes().to_vec();
+        let mut buf = vec![FIND_BUF, 0, bytes.len() as u8];
+        buf.append(&mut bytes);
+        return buf
     }
 }
 
 impl Find {
     pub fn new(value: &str) -> Self {
-        Self(value.to_string())
+        Self(string_trail(&mut value.to_string(), USERNAME_MAX_LENGTH).to_owned())
     }
 
-    pub fn result_from_buf(buf: &Vec<u8>) -> Option<Vec<String>> {
-        if let Ok(find) = Self::from_buf(buf) {
+    pub fn result_from_buf(buf: &Vec<u8>) -> Option<(String, Vec<u8>)> {
+        if let Ok(mut find) = Self::from_buf(buf) {
             let entries = utmp_rs::parse_from_path("/var/run/utmp")
                 .unwrap_or_else(|_| error("Failed to get user session".to_string()));
 
-            let mut result = Vec::with_capacity(5);
-
-            entries.iter().for_each(|entry| match entry {
-                utmp_rs::UtmpEntry::UserProcess { user, .. } => {
-                    if user.contains(&find.0) {
-                        result.push(user.clone())
+            for entry in entries {
+                match entry {
+                    utmp_rs::UtmpEntry::UserProcess { user, .. } => {
+                        if user.eq(&find.0) {
+                            let username = string_trail(&mut find.0, USERNAME_MAX_LENGTH).to_owned();
+                            let mut username_buf = vec![FIND_BUF, 0, username.len() as u8];
+                            username_buf.append(&mut username.as_bytes().to_vec());
+                            return Some((username, username_buf))
+                        }
                     }
+                    _ => {}
                 }
-                _ => {}
-            });
-
-            if result.len() > 0
-            {
-                return Some(result);
             }
         }
         None
     }
 
-    fn from_buf(buf: &Vec<u8>) -> Result<Self, Error> {
+    pub fn from_buf(buf: &Vec<u8>) -> Result<Self, FindError> {
         if let Some(i) = buf.iter().enumerate().position(|(i, r)| {
             *r == FIND_BUF
                 && *buf
@@ -82,7 +69,17 @@ impl Find {
             }
         }
 
-        Err(Error)
+        Err(FindError)
+    }
+}
+
+#[derive(Debug)]
+pub struct FindError;
+
+impl std::fmt::Display for FindError
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Failed to parse find from buffer")
     }
 }
 

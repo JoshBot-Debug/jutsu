@@ -1,4 +1,4 @@
 
 pub trait Segment {
-    fn data(&self) -> Vec<u8>;
+    fn buf(&self) -> Vec<u8>;
 }

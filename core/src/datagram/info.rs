@@ -7,7 +7,7 @@ pub struct Info;
 const INFO_BUF: u8 = 105;
 
 impl Segment for Info {
-    fn data(&self) -> Vec<u8> {
+    fn buf(&self) -> Vec<u8> {
         vec![INFO_BUF, 0]
     }
 }
@@ -26,7 +26,6 @@ impl Info {
                     .unwrap_or_else(|| error("Failed to parse buffer".to_string()))
                     == 0
         }) {
-
             return Some((MemInfo::new(), LoadAvg::new(), Hostname::new()));
         };
 

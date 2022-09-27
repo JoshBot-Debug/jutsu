@@ -15,7 +15,7 @@ impl Datagram {
     }
 
     pub fn push(&mut self, segment: impl Segment) {
-        self.payload.append(&mut segment.data());
+        self.payload.append(&mut segment.buf());
     }
 
     pub fn buf(&mut self) -> Vec<u8> {
@@ -23,14 +23,6 @@ impl Datagram {
         buf.append(&mut self.payload);
         buf
     }
-
-    // pub fn buf(&mut self) -> Vec<u8> {
-    //     let mut size = size(self.payload.len());
-    //     let mut buf = Vec::with_capacity(self.payload.len() + size.len());
-    //     buf.append(&mut size);
-    //     buf.append(&mut self.payload);
-    //     buf
-    // }
 }
 
 fn _size(length: usize) -> Vec<u8> {

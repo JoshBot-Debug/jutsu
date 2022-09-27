@@ -1,7 +1,7 @@
 use std::net;
 
 use jutsu_cli::{Cli, CommandType};
-use jutsu_core::{Datagram, Find, Info};
+use jutsu_core::{Datagram, Find, Info, Hostname};
 
 const DAEMON_PORT: &str = "0.0.0.0:34255";
 
@@ -45,6 +45,27 @@ fn main() -> std::io::Result<()> {
                 dbg!(&to, size);
             }
         });
+
+        loop {
+            let mut buf = vec![0; 128];
+
+            match socket.recv_from(&mut buf) {
+                Ok((size, from)) =>
+                {
+                    println!("Received reply ({} bytes) from {}", size, from);
+                    buf.truncate(size);
+
+                    let find = Find::from_buf(&buf);
+                    let hostname = Hostname::from_buf(&buf);
+                    dbg!(&buf);
+                    dbg!(&from);
+                    dbg!(&find);
+                    dbg!(&hostname);
+                    break;
+                }
+                Err(_) => error("Failed to receive packet.")
+            }
+        }
     }
 
     Ok(())
