@@ -14,3 +14,7 @@ criterion = "0.3"
 [[bench]]
 name = "bench_datagram_find"
 harness = false
+
+[[bench]]
+name = "bench_proc_meminfo"
+harness = false

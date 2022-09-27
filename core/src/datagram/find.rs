@@ -39,7 +39,7 @@ impl Find {
             let entries = utmp_rs::parse_from_path("/var/run/utmp")
                 .unwrap_or_else(|_| error("Failed to get user session".to_string()));
 
-            let mut result = Vec::with_capacity(3);
+            let mut result = Vec::with_capacity(5);
 
             entries.iter().for_each(|entry| match entry {
                 utmp_rs::UtmpEntry::UserProcess { user, .. } => {
@@ -50,12 +50,15 @@ impl Find {
                 _ => {}
             });
 
-            return Some(result);
+            if result.len() > 0
+            {
+                return Some(result);
+            }
         }
         None
     }
 
-    pub fn from_buf(buf: &Vec<u8>) -> Result<Self, Error> {
+    fn from_buf(buf: &Vec<u8>) -> Result<Self, Error> {
         if let Some(i) = buf.iter().enumerate().position(|(i, r)| {
             *r == FIND_BUF
                 && *buf

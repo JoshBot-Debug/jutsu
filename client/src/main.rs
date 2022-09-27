@@ -1,4 +1,4 @@
-use jutsu_core::{DATAGRAM_SIZE, Find};
+use jutsu_core::{DATAGRAM_SIZE, Find, Info, MemInfo};
 use std::net;
 
 const CLIENT_PORT: &str = "0.0.0.0:34254";
@@ -10,6 +10,8 @@ fn main() -> std::io::Result<()> {
             Err(_) => error(format!("Failed to bind socket on {CLIENT_PORT}").as_str())
         };
 
+        MemInfo::new();
+
         loop {
             let mut buf = vec![0; DATAGRAM_SIZE];
 
@@ -18,33 +20,20 @@ fn main() -> std::io::Result<()> {
                 {
                     // dbg!(&buf);
                     dbg!(from);
-
-                    // let find = Find::from_buf(&buf).unwrap();
-                    let find = Find::result_from_buf(&buf).unwrap();
+                    
+                    let find = Find::result_from_buf(&buf);
                     dbg!(&find);
 
-                    // let t = buf.get(0);
-
-                    // if let Some(t) = t
-                    // {
-                    //    dbg!(t);
-
-                    //    if let Some(ts) = buf.get(2)
-                    //    {
-                    //         dbg!(ts);
-
-                    //         if let Some(td) = buf.get(3..(3+ts).into())
-                    //         {
-                    //             dbg!(td);
-                    //             let td_as_string = String::from_utf8(td.to_vec());
-                                
-                    //             if let Ok(td_as_string) = td_as_string
-                    //             {
-                    //                 dbg!(td_as_string);
-                    //             }
-                    //         }
-                    //    }
-                    // }
+                    if let Some(users) = find
+                    {
+                        if let Some((meminfo, loadavg, hostname)) = Info::result_from_buf(&buf)
+                        {
+                            dbg!(&users);
+                            dbg!(&meminfo);
+                            dbg!(&loadavg);
+                            dbg!(&hostname);
+                        }
+                    }
                 },
                 Err(_) => error("Failed to receive packet.")
             }
