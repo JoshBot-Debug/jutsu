@@ -1,17 +1,17 @@
-use jutsu_core::{DATAGRAM_SIZE, Find, Info};
+use jutsu_core::segment::{self, byte};
 use std::net;
 
-const CLIENT_PORT: &str = "0.0.0.0:34254";
+const CLIENT_ADDRESS: &str = "0.0.0.0:34254";
 
 fn main() -> std::io::Result<()> {
     {
-        let socket = match net::UdpSocket::bind(CLIENT_PORT) {
+        let socket = match net::UdpSocket::bind(CLIENT_ADDRESS) {
             Ok(v) => v,
-            Err(_) => error(format!("Failed to bind socket on {CLIENT_PORT}").as_str())
+            Err(_) => error(format!("Failed to bind socket on {CLIENT_ADDRESS}").as_str())
         };
 
         loop {
-            let mut buf = vec![0; DATAGRAM_SIZE];
+            let mut buf = vec![0; byte::DATAGRAM_SIZE];
 
             match socket.recv_from(&mut buf) {
                 Ok((_, from)) => 
@@ -19,25 +19,26 @@ fn main() -> std::io::Result<()> {
                     dbg!(&buf);
                     dbg!(from);
                     
-                    let find = Find::result_from_buf(&buf);
+                    let find = segment::Find::result_from_buf(&buf);
                     dbg!(&find);
 
-                    if let Some((username, mut user)) = find
+                    if let Some(username) = find
                     {
-                        if let Some((meminfo, loadavg, hostname)) = Info::result_from_buf(&buf)
+                        if let Some((meminfo, loadavg, hostname)) = segment::Info::result_from_buf(&buf)
                         {
                             dbg!(&username);
                             dbg!(&meminfo);
                             dbg!(&loadavg);
                             dbg!(&hostname);
 
+                            let mut username = username.buf();
                             let mut meminfo = meminfo.buf();
                             let mut loadavg = loadavg.buf();
                             let mut hostname = hostname.buf();
 
-                            let mut r_buf = Vec::with_capacity(user.len()+meminfo.len()+loadavg.len()+hostname.len());
+                            let mut r_buf = Vec::with_capacity(username.len()+meminfo.len()+loadavg.len()+hostname.len());
 
-                            r_buf.append(&mut user);
+                            r_buf.append(&mut username);
                             r_buf.append(&mut meminfo);
                             r_buf.append(&mut loadavg);
                             r_buf.append(&mut hostname);

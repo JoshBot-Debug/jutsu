@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use jutsu_core::Find;
+use jutsu_core::segment::Find;
 
 
 

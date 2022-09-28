@@ -1,14 +1,20 @@
-use crate::{MemInfo, proc::{LoadAvg, Hostname}};
+mod hostname;
+mod loadavg;
+mod meminfo;
+
+pub use hostname::Hostname;
+pub use loadavg::LoadAvg;
+pub use meminfo::MemInfo;
 
 use super::Segment;
+use super::byte;
+
 
 pub struct Info;
 
-const INFO_BUF: u8 = 105;
-
 impl Segment for Info {
     fn buf(&self) -> Vec<u8> {
-        vec![INFO_BUF, 0]
+        vec![byte::INFO, 0, 0]
     }
 }
 
@@ -20,7 +26,7 @@ impl Info {
     pub fn result_from_buf(buf: &Vec<u8>) -> Option<(MemInfo, LoadAvg, Hostname)> {
         
         if let Some(_) = buf.iter().enumerate().find(|(i, r)| {
-            **r == INFO_BUF
+            **r == byte::INFO
                 && *buf
                     .get(i + 1)
                     .unwrap_or_else(|| error("Failed to parse buffer".to_string()))

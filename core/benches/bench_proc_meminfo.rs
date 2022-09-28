@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use jutsu_core::MemInfo;
+use jutsu_core::segment::MemInfo;
 
 fn criterion_benchmark(c: &mut Criterion) {
     // let meminfo = std::fs::read_to_string("/proc/meminfo").unwrap();

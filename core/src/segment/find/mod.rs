@@ -1,34 +1,43 @@
+mod username;
+
+use std::fmt::Error;
+
 use crate::string_trail;
 
-const HOSTNAME_MAX_LENGTH: usize = 32;
+pub use self::username::Username;
 
-const HOSTNAME_BUF: u8 = 104;
+use super::Segment;
+use super::byte;
 
 #[derive(Debug)]
-pub struct Hostname(String);
+pub struct Find(String);
 
-impl Hostname {
-    pub fn new() -> Self
-    {
-        let mut hostname = std::fs::read_to_string("/etc/hostname")
-        .unwrap_or("unknown".to_string())
-        .trim()
-        .to_string();
-        
-        Self(string_trail(&mut hostname, HOSTNAME_MAX_LENGTH).to_owned())
-    }
+const USERNAME_MAX_LENGTH: usize = 32;
 
-    pub fn buf(&self) -> Vec<u8>
-    {
+impl Segment for Find {
+    fn buf(&self) -> Vec<u8> {
         let mut bytes = self.0.as_bytes().to_vec();
-        let mut buf = vec![HOSTNAME_BUF, 0, bytes.len() as u8];
+        let mut buf = vec![byte::FIND, 0, bytes.len() as u8];
         buf.append(&mut bytes);
         return buf
     }
+}
 
-    pub fn from_buf(buf: &Vec<u8>) -> Result<Self, HostnameError> {
+impl Find {
+    pub fn new(value: &str) -> Self {
+        Self(string_trail(&mut value.to_string(), USERNAME_MAX_LENGTH).to_owned())
+    }
+
+    pub fn result_from_buf(buf: &Vec<u8>) -> Option<Username> {
+        if let Ok(mut find) = Self::from_buf(buf) {
+            return Username::new(&mut find);
+        }
+        None
+    }
+
+    fn from_buf(buf: &Vec<u8>) -> Result<Self, Error> {
         if let Some(i) = buf.iter().enumerate().position(|(i, r)| {
-            *r == HOSTNAME_BUF
+            *r == byte::FIND
                 && *buf
                     .get(i + 1)
                     .unwrap_or_else(|| error("Failed to parse buffer".to_string()))
@@ -50,17 +59,7 @@ impl Hostname {
             }
         }
 
-        Err(HostnameError)
-    }
-}
-
-#[derive(Debug)]
-pub struct HostnameError;
-
-impl std::fmt::Display for HostnameError
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Failed to parse hostname from buffer")
+        Err(Error)
     }
 }
 
