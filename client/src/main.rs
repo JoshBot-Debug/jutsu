@@ -39,9 +39,9 @@ fn main() -> std::io::Result<()> {
                             let mut r_buf = Vec::with_capacity(username.len()+meminfo.len()+loadavg.len()+hostname.len());
 
                             r_buf.append(&mut username);
+                            r_buf.append(&mut hostname);
                             r_buf.append(&mut meminfo);
                             r_buf.append(&mut loadavg);
-                            r_buf.append(&mut hostname);
 
                             dbg!(&r_buf);
 

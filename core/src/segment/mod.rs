@@ -30,28 +30,28 @@ pub fn output_from_buf(buf: &Vec<u8>) -> String
         ) {
             (&byte::USERNAME, 0, _, len) => {
                 let username = Username::from_buf(&buf[index+4..(index+4+*len as usize)].to_vec());
-                output.push_str(format!("\nUsername: {}", username.0).as_str());
+                output.push_str(format!("\nUsername:           {}", username.0).as_str());
             },
             (&byte::HOSTNAME, 0, _, len) => {
                 let hostname = Hostname::from_buf(&buf[index+4..(index+4+*len as usize)].to_vec());
-                output.push_str(format!("\nHostname: {}", hostname.0).as_str());
+                output.push_str(format!("\nHostname:           {}", hostname.0).as_str());
             },
             (&byte::LOAD_AVG, 0, c, len) => {
                 let percent = LoadAvg::from_buf(&buf[index+4..(index+4+*len as usize)].to_vec());
                 match c {
-                    1 => output.push_str(format!("\nOne Minute CPU Avg: {}%", percent).as_str()),
-                    2 => output.push_str(format!("\nFive Minute CPU Avg: {}%", percent).as_str()),
-                    3 => output.push_str(format!("\nFifteen Minute CPU Avg: {}%", percent).as_str()),
-                    _ => output.push_str(format!("\nUnknown CPU Avg: {}%", percent).as_str()),
+                    1 => output.push_str(format!("\nCPU load avg (1m):  {}%", percent).as_str()),
+                    2 => output.push_str(format!("\nCPU load avg (5m):  {}%", percent).as_str()),
+                    3 => output.push_str(format!("\nCPU load avg (15m): {}%", percent).as_str()),
+                    _ => output.push_str(format!("\nCPU load Avg (unknown): {}%", percent).as_str()),
                 }
             },
             (&byte::MEMINFO, 0, c, len) => {
                 let gb = MemInfo::from_buf(&buf[index+4..(index+4+*len as usize)].to_vec());
                 match c {
-                    1 => output.push_str(format!("\nMemTotal: {} GB", gb).as_str()),
-                    2 => output.push_str(format!("\nMemFree: {} GB", gb).as_str()),
-                    3 => output.push_str(format!("\nMemAvailable: {} GB", gb).as_str()),
-                    _ => output.push_str(format!("\nMemUnknown: {} GB", gb).as_str()),
+                    1 => output.push_str(format!("\nRAM (total):        {} GB", gb).as_str()),
+                    2 => output.push_str(format!("\nRAM (free):         {} GB", gb).as_str()),
+                    3 => output.push_str(format!("\nRAM (available):    {} GB", gb).as_str()),
+                    _ => output.push_str(format!("\nRAM (unknown):      {} GB", gb).as_str()),
                 }
             }
             _ => {}

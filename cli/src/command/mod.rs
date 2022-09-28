@@ -12,11 +12,11 @@ Usage:
 
 Options:
     -i, --ip-address      Target client's ipv4 address. [REQUIRED]
+    -t, --timeout         Time in seconds to wait for client response. Default 5s.
     -f, --find            Find a client by session username.
     --info                Get client system info.
 
-Copyrights © 2022 joshuajosephmyers.com. All rights reserved. 
-"#;
+Copyrights © 2022 joshuajosephmyers.com. All rights reserved."#;
 
 const IP_EXAMPLE: &str = r#"
 
@@ -72,6 +72,7 @@ impl Command {
             "--ip-address" => CommandType::IpAddress,
             "--info" => CommandType::Info,
             "--help" => CommandType::Help,
+            "--timeout" => CommandType::Timeout,
             _ => CommandType::None,
         }
     }
@@ -93,6 +94,17 @@ pub fn show_example_ip(message: &str) -> !
 fn from_arg(args: &Vec<String>, argument: &String, index: usize) -> Option<Command> {
     match argument.as_str() {
         "-h" | "--help" => Some(Command {arg: "--help".to_string(), value: None}),
+        "-t" | "--timeout" => {
+            let val = match args.get(index + 1) {
+                Some(v) => v.parse::<usize>().unwrap_or_else(|_| error(format!(
+                    "Timeout (-t, --timeout) requires an integer value.\nExample: -t 5"
+                ))),
+                None => error(format!(
+                    "Timeout (-t, --timeout) requires a value.\nExample: -t 5"
+                )),
+            };
+            Some(Command {arg: "--timeout".to_string(), value: Some(val.to_string())})
+        },
         "-f" | "--find" => {
             allow_once(args, Some("-f"), Some("--find"), format!("Duplicate find (-f, --find) commands found. You cannot pass multiple find (-f, --find) commands."));
             let val = match args.get(index + 1) {

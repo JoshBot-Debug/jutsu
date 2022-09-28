@@ -4,5 +4,6 @@ pub enum CommandType {
     Help,
     Info,
     Find,
+    Timeout,
     None,
 }
