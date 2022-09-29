@@ -1,4 +1,4 @@
-# USAGE
+# JUTSU
 
 ## Get client info
 Returns client's identity.
