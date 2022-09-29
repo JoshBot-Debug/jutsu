@@ -1,11 +1,12 @@
 [package]
-name = "jutsu-daemon"
+name = "jutsu"
 version = "0.1.0"
 edition = "2021"
+authors = ["Joshua Joseph Myers, joshuajosephmyers@outlook.com"]
+description = "Find clients in your network by username"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+clap = { version = "4.0.2" }
 jutsu-core = { path = "../core" }
-jutsu-cli = { path = "../cli" }
-ctrlc = "3.2.3"

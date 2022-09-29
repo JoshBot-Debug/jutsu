@@ -1,9 +1,9 @@
 [workspace]
 
 members = [
-    "client",
-    "daemon",
     "core",
+    "daemon",
+    "client",
 ]
 
 [profile.release]

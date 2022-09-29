@@ -6,15 +6,4 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-utmp-rs = "0.3.0"
-
-[dev-dependencies]
-criterion = "0.3"
-
-[[bench]]
-name = "bench_datagram_find"
-harness = false
-
-[[bench]]
-name = "bench_proc_meminfo"
-harness = false
+clap = { version = "4.0.2", features = ["derive"] }
