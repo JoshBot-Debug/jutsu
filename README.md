@@ -13,13 +13,16 @@ Returns client's identity.
 
 ## Filter client(s) by matching user session.
 Filter client(s) by the specified username where the user session is active.
+You can pass a single client, multiple clients or a range
 #### Command:
 	jutsu -i 192.168.1.1-254 -u <username>
 #### Returns:
 	IpAddress, Hostname, Session(s)
 
-## Deploy a client via SSH
+## Install or uninstall a client via SSH
+You can pass a single client, multiple clients or a range
+#### Deploy
 	jutsu --deploy-client joshua@192.168.1.1-254
 
-## Deploy a client via SSH
+#### Purge
 	jutsu --purge-client joshua@192.168.1.1-254
