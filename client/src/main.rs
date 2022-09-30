@@ -1,8 +1,8 @@
-use jutsu_core::{socket::{JutsuSocket, CLIENT_PORT}, cli};
+use jutsu_core::{socket, response, cli};
 
 fn main() {
     
-    let socket = match JutsuSocket::new(CLIENT_PORT) {
+    let socket = match socket::JutsuSocket::new(socket::CLIENT_PORT) {
         Ok(socket) => socket,
         Err(e) =>
         {
@@ -11,27 +11,63 @@ fn main() {
         }
     };
 
-    let mut buf: Vec<u8> = vec![0; 16];
-    
-    match socket.receive(&mut buf) {
-        Ok((packet, from)) =>
-        {
-            dbg!(&packet);
-            
-            // /**
-            //  * Response::from_cli_buf() // Returns an object containg the result as buf from a cli buf
-            //  * 
-            //  * on the server
-            //  * Response::from_buf() // converts a result buf to Response.
-            //  */
-            dbg!(cli::Args::from_buf(&packet.to_vec()).unwrap());
-            println!("[CLIENT] Received packet from {}", from);
-            socket.send(&packet,&from);
-        },
-        Err(e) =>
-        {
-            eprintln!("{e}");
-            std::process::exit(1)
+    let mut response = response::Response::new();
+
+
+    loop {
+        let mut buf: Vec<u8> = vec![0; 256];
+        
+        match socket.receive(&mut buf) {
+            Ok((cli_buf, from)) =>
+            {         
+                println!("Received packet from {}", from);
+
+                response.refresh();
+
+                let cli = cli::Args::from_buf(&cli_buf);
+
+                dbg!(&cli);
+
+                match cli {
+                    Ok(args) =>
+                    {
+                        dbg!(&args);
+
+                        if filter(&args, &response)
+                        {
+                            match response.buf() {
+                                Ok(buf) =>
+                                {
+                                    socket.send(&buf.to_vec(),&from);
+                                },
+                                Err(e) => {
+                                    eprintln!("{e}");
+                                    std::process::exit(1)
+                                }
+                            }
+                        }
+                    },
+                    Err(e) =>
+                    {
+                        eprintln!("{e}");
+                        std::process::exit(1)
+                    }
+                }
+            }
+            Err(e) =>
+            {
+                eprintln!("{e}");
+                std::process::exit(1)
+            }
         }
+    }
+}
+
+
+fn filter(args: &cli::Args, response: &response::Response) -> bool
+{
+    match &args.username {
+        Some(username) => return response.session_includes(&username),
+        None => return true
     }
 }

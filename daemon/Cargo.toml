@@ -10,3 +10,4 @@ description = "Find clients in your network by username"
 [dependencies]
 clap = { version = "4.0.2" }
 jutsu-core = { path = "../core" }
+ctrlc = "3.2.3"

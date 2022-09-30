@@ -26,7 +26,7 @@ impl JutsuSocket
         Ok(Self { socket, port })
     }
 
-    pub fn send(&self, buf: &[u8], to: &Ipv4Addr) -> bool
+    pub fn send(&self, buf: &Vec<u8>, to: &Ipv4Addr) -> bool
     {
         match self.socket.send_to(buf, SocketAddrV4::new(*to, self.port)) {
             Ok(_) => true,

@@ -3,59 +3,34 @@
 use std::net::Ipv4Addr;
 
 use clap::{Parser, ArgMatches};
+use serde::{Serialize, Deserialize};
 
+#[derive(Serialize, Deserialize)]
 #[derive(Debug, Clone)]
-pub struct Ipv4AddrRange(Vec<Ipv4Addr>);
+pub struct Ipv4AddrRange(Option<Vec<Ipv4Addr>>);
 
 impl Ipv4AddrRange {
     pub fn foreach<T>(&self, f: T)
     where
         T: FnOnce(&Ipv4Addr) + Copy
     {
-        for ip_address in &self.0 { f(ip_address) }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Username(Option<String>);
-
-impl Username {
-
-    fn byte() -> u8 {117}
-
-    pub fn from_buf(buf: &Vec<u8>) -> Result<Self, String> {
-        if let Some(i) = buf.iter().enumerate().position(|(i, r)| {
-            *r == Username::byte()
-                && *buf
-                    .get(i + 1)
-                    .unwrap_or_else(|| error("Failed to parse buffer".to_string()))
-                    == 0
-        }) {
-            if let Ok(value) = String::from_utf8(
-                buf.get(
-                    i + 3
-                        ..i + 3
-                            + *buf
-                                .get(i + 2)
-                                .unwrap_or_else(|| error("Failed to parse buffer".to_string()))
-                                as usize,
-                )
-                .unwrap_or_else(|| error("Failed to parse buffer".to_string()))
-                .to_vec(),
-            ) {
-                return Ok(Self(Some(value)));
-            }
+        if let Some(addresses) = &self.0
+        {
+            for ip_address in addresses { f(ip_address) }
         }
+    }
 
-        Err(format!("Failed to get username from buffer."))
+    pub fn len(&self) -> usize
+    {
+        match &self.0  {
+            Some(v) => v.len(),
+            None => 0
+        }
     }
 }
 
-fn error(message: String) -> ! {
-    eprintln!("{message}");
-    std::process::exit(1)
-}
-
+#[derive(Clone)]
+#[derive(Serialize, Deserialize)]
 #[derive(Parser, Debug)]
 #[command(version, about, author)]
 pub struct Args {
@@ -64,8 +39,8 @@ pub struct Args {
    pub ip_address: Ipv4AddrRange,
 
    /// Find a client by session username.
-   #[arg(short, long, value_parser = parse_username)]
-   pub username: Username,
+   #[arg(short, long)]
+   pub username: Option<String>,
 
    ///  Time in seconds to wait for client response.
    #[arg(short, long, default_value_t = 5)]
@@ -75,44 +50,27 @@ pub struct Args {
 impl Args {
     pub fn buf(&self) -> Result<Vec<u8>, String>
     {
-        let mut buf = Vec::with_capacity(32);
-
-        match &self.username.0 {
-            Some(username) =>
-            {
-                buf.append(&mut [Username::byte(), 0, username.len() as u8].to_vec());
-                buf.append(&mut username.as_bytes().to_vec())
-            },
-            None => {}
+        let mut packet = self.clone();
+        packet.ip_address = Ipv4AddrRange(None);
+        match bincode::serialize(&packet) {
+            Ok(bytes) => Ok(bytes),
+            Err(_) => Err(String::from("Failed to serialize cli."))
         }
-
-        Ok(buf)
     }
 
-    pub fn from_buf(buf: &Vec<u8>) -> Result<Args, String>
+    pub fn from_buf(buf: &[u8]) -> Result<Self, String>
     {
-        let ip_address = Ipv4AddrRange(Vec::new());
-
-        let username = match Username::from_buf(buf) {
-            Ok(username) => username,
-            Err(_) => return Err(format!("Failed to get username from buffer."))
-        };
-
-        Ok(Args { ip_address, username, timeout: 0 })
+        match bincode::deserialize(buf) {
+            Ok(bytes) => Ok(bytes),
+            Err(_) => Err(String::from("Failed to deserialize cli."))
+        }
     }
-}
-
-
-
-
-fn parse_username(username: &str) -> Result<Username, String> {   
-    Ok(Username(Some(username.to_string())))
 }
 
 fn parse_ipv4(ip_string: &str) -> Result<Ipv4AddrRange, String> {
     let mut targets = Vec::with_capacity(1020);
 
-    match ip_string.parse::<Ipv4Addr>() {
+    let c = match ip_string.parse::<Ipv4Addr>() {
         Ok(ip_address) => targets.push(ip_address),
         Err(_) =>
         {
@@ -123,14 +81,17 @@ fn parse_ipv4(ip_string: &str) -> Result<Ipv4AddrRange, String> {
                     return Err(e);
                 }
             }
-            if let Err(e) = range_seperated(&ip_string, &mut targets)
+            if ip_string.contains("-")
             {
-                return Err(e);
+                if let Err(e) = range_seperated(&ip_string, &mut targets)
+                {
+                    return Err(e);
+                }
             }
         }
-    }
+    };
     
-    Ok(Ipv4AddrRange(targets))
+    Ok(Ipv4AddrRange(Some(targets)))
 }
 
 fn comma_seperated(ip_string: &str, targets: &mut Vec<Ipv4Addr>) -> Result<(), String>
@@ -187,7 +148,8 @@ fn range_seperated(ip_string: &str, targets: &mut Vec<Ipv4Addr>) -> Result<(), S
         for i in start..=end {
             targets.push(Ipv4Addr::new(first[0], first[1], first[2], i.try_into().unwrap()))
         }
+        return Ok(());
     }
 
-    return Err(format!("The ipv4 address ({ip_string}) provided is invalid. Use one of the patterns below."))
+    return Err(format!("The 6 ipv4 address ({ip_string}) provided is invalid. Use one of the patterns below."))
 }
