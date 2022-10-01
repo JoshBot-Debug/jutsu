@@ -18,6 +18,22 @@ fn main() {
 
     let args = cli.buf();
 
+    let mut stdout = std::io::stdout();
+
+    let (exit_pkts_tx, exit_pkts_rx) = mpsc::channel::<usize>();
+    let (exit_byts_tx, exit_byts_rx) = mpsc::channel::<usize>();
+
+    let (timeout_pkts_tx, timeout_pkts_rx) = mpsc::channel::<usize>();
+    let (timeout_byts_tx, timeout_byts_rx) = mpsc::channel::<usize>();
+    
+    let transmitted = Arc::new(Mutex::new(cli.ip_address.len()));
+
+    let exit_transmitted = transmitted.clone();
+    let timeout_transmitted = transmitted.clone();
+
+    let mut packets_received = 0;
+    let mut bytes_received = 0;
+
     match args {
         Ok(buf) =>
         {
@@ -32,24 +48,10 @@ fn main() {
         }
     }
 
-    let (exit_pkts_tx, exit_pkts_rx) = mpsc::channel::<usize>();
-    let (exit_byts_tx, exit_byts_rx) = mpsc::channel::<usize>();
-
-    let (timeout_pkts_tx, timeout_pkts_rx) = mpsc::channel::<usize>();
-    let (timeout_byts_tx, timeout_byts_rx) = mpsc::channel::<usize>();
-    
-    let transmitted = Arc::new(Mutex::new(cli.ip_address.len()));
-
-    let exit_transmitted = transmitted.clone();
-    let timeout_transmitted = transmitted.clone();
-
     ctrlc::set_handler(move || {
         statistics(&exit_pkts_rx, &exit_byts_rx, &*exit_transmitted.lock().unwrap())
     })
     .expect("Error setting Ctrl-C handler");
-
-    let mut stdout = std::io::stdout();
-
 
     std::thread::spawn(move || {
 
@@ -63,10 +65,6 @@ fn main() {
             }
         }
     });
-
-
-    let mut packets_received = 0;
-    let mut bytes_received = 0;
 
     loop {
         let mut buf: Vec<u8> = vec![0; 256];
