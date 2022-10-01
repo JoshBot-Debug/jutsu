@@ -39,7 +39,20 @@ impl Response
 
     pub fn session_includes(&self, username: &String) -> bool
     {
-        self.session.contains(username)
+        for sess in &self.session
+        {
+            if sess.contains(username) {return  true};
+        }
+        return false;
+    }
+
+    pub fn hostname_includes(&self, hostname: &String) -> bool
+    {
+        for host in &self.hostname
+        {
+            if host.contains(hostname) {return  true};
+        }
+        return false;
     }
 
     pub fn print_session(&self)

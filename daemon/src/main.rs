@@ -64,26 +64,6 @@ fn main() {
         }
     });
 
-    fn statistics(pkt_recv_rx: &Receiver<usize>, byts_recv_rx: &Receiver<usize>, sent: &usize)
-    {
-        let received = pkt_recv_rx.try_recv().unwrap_or(0);
-        let bytes_received = byts_recv_rx.try_recv().unwrap_or(0);
-
-        println!("\r--- jutsu statistics ---\r");
-        println!("{:?} packets transmitted, {:?} packets ({:?} bytes) received ", sent, received, bytes_received);
-        std::process::exit(0)
-    }
-
-    fn timeup(stdout: &mut Stdout, timeout: &mut u32) -> bool
-    {
-        if *timeout > 1 {
-            *timeout -= 1;
-            print!("\rWaiting... {:?}s", timeout);
-            stdout.flush().unwrap();
-            return  false;
-        }
-        return  true;
-    }
 
     let mut packets_received = 0;
     let mut bytes_received = 0;
@@ -105,6 +85,7 @@ fn main() {
                         println!("Received reply ({} bytes) from {}", response_buf.len(), from);
                         res.print_session();
                         res.print_hostname();
+                        println!();
                     },
                     Err(e) =>
                     {
@@ -125,4 +106,26 @@ fn main() {
             }
         }
     }
+}
+
+
+fn statistics(pkt_recv_rx: &Receiver<usize>, byts_recv_rx: &Receiver<usize>, sent: &usize)
+{
+    let received = pkt_recv_rx.try_recv().unwrap_or(0);
+    let bytes_received = byts_recv_rx.try_recv().unwrap_or(0);
+
+    println!("\r--- jutsu statistics ---\r");
+    println!("{:?} packets transmitted, {:?} packets ({:?} bytes) received ", sent, received, bytes_received);
+    std::process::exit(0)
+}
+
+fn timeup(stdout: &mut Stdout, timeout: &mut u32) -> bool
+{
+    if *timeout > 1 {
+        *timeout -= 1;
+        print!("\rWaiting... {:?}s", timeout);
+        stdout.flush().unwrap();
+        return  false;
+    }
+    return  true;
 }

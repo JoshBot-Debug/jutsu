@@ -42,6 +42,10 @@ pub struct Args {
    #[arg(short, long)]
    pub username: Option<String>,
 
+    /// Find a client by hostname.
+    #[arg(long)]
+    pub hostname: Option<String>,
+
    ///  Time in seconds to wait for client response.
    #[arg(short, long, default_value_t = 5)]
    pub timeout: u32

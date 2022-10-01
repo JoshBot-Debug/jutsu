@@ -66,8 +66,8 @@ fn main() {
 
 fn filter(args: &cli::Args, response: &response::Response) -> bool
 {
-    match &args.username {
-        Some(username) => return response.session_includes(&username),
-        None => return true
-    }
+    return (
+        match &args.username { Some(username) => response.session_includes(&username), None => false} ||
+        match &args.hostname { Some(hostname) => response.hostname_includes(&hostname), None => false }
+    )
 }
