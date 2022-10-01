@@ -48,10 +48,14 @@ fn main() {
         }
     }
 
-    ctrlc::set_handler(move || {
-        statistics(&exit_pkts_rx, &exit_byts_rx, &*exit_transmitted.lock().unwrap())
-    })
-    .expect("Error setting Ctrl-C handler");
+    match ctrlc::set_handler(move || { statistics(&exit_pkts_rx, &exit_byts_rx, &*exit_transmitted.lock().unwrap()) }) {
+        Ok(_) => {},
+        Err(_) =>
+        {
+            eprintln!("Error setting Ctrl-C handler");
+            std::process::exit(1)
+        }  
+    }
 
     std::thread::spawn(move || {
 

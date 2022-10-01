@@ -29,26 +29,41 @@ impl Ipv4AddrRange {
     }
 }
 
+/// Jutsu, a fast, simple and powerful tool used to find and filter linux machines
+/// Joshua Joseph Myers <joshuajosephmyers@outlook.com>        
 #[derive(Clone)]
 #[derive(Serialize, Deserialize)]
 #[derive(Parser, Debug)]
-#[command(version, about, author)]
+#[command(version, name = "jutsu", verbatim_doc_comment)]
 pub struct Args {
-   /// Target client's ipv4 address. [required]
-   #[arg(short, long, value_parser = parse_ipv4, value_name = "ip_address/range")]
-   pub ip_address: Ipv4AddrRange,
+    /// Target client's ipv4 address.
+    /// jutsu -i 192.168.1.1		 [Single client]
+    /// jutsu -i 192.168.1.1-254	 [Range of clients]
+    /// jutsu -i 192.168.1.2,4,8	 [Specific clients]
+    #[arg(short, long, value_parser = parse_ipv4, value_name = "ipv4 address/range", verbatim_doc_comment)]
+    pub ip_address: Ipv4AddrRange,
 
-   /// Find a client by session username.
-   #[arg(short, long)]
-   pub username: Option<String>,
+    /// Find a client by session username.
+    #[arg(short, long, value_name = "username")]
+    pub username: Option<String>,
 
     /// Find a client by hostname.
-    #[arg(long)]
+    #[arg(long, value_name = "hostname")]
     pub hostname: Option<String>,
 
-   ///  Time in seconds to wait for client response.
-   #[arg(short, long, default_value_t = 5)]
-   pub timeout: u32
+    /// Deploy a client via SSH.
+    /// jutsu --deploy-client administrator@192.168.1.1-255      [Can be a single, range or specific clients.]
+    #[arg(long, value_name = "user@host_ip", verbatim_doc_comment)]
+    pub deploy_client: Option<String>,
+
+    /// Remove a client via SSH.
+    /// jutsu --purge-client administrator@192.168.1.1-255       [Can be a single, range or specific clients.]
+    #[arg(long, value_name = "user@host_ip", verbatim_doc_comment)]
+    pub purge_client: Option<String>,
+
+    ///  Time in seconds to wait for client response.
+    #[arg(short, long, default_value_t = 3, value_name = "seconds")]
+    pub timeout: u32
 }
 
 impl Args {
