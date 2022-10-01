@@ -7,25 +7,21 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize)]
 #[derive(Debug, Clone)]
-pub struct Ipv4AddrRange(Option<Vec<Ipv4Addr>>);
+pub struct Ipv4AddrRange(Vec<Ipv4Addr>);
 
 impl Ipv4AddrRange {
     pub fn foreach<T>(&self, f: T)
     where
         T: FnOnce(&Ipv4Addr) + Copy
     {
-        if let Some(addresses) = &self.0
-        {
-            for ip_address in addresses { f(ip_address) }
-        }
+        for ip_address in &self.0 { f(ip_address) }
     }
 
-    pub fn len(&self) -> usize
+    pub fn len(&self) -> usize { self.0.len() }
+
+    pub fn empty() -> Self
     {
-        match &self.0  {
-            Some(v) => v.len(),
-            None => 0
-        }
+        Ipv4AddrRange(vec![])
     }
 }
 
@@ -41,7 +37,7 @@ pub struct Args {
     /// jutsu -i 192.168.1.1-254	 [Range of clients]
     /// jutsu -i 192.168.1.2,4,8	 [Specific clients]
     #[arg(short, long, value_parser = parse_ipv4, value_name = "ipv4 address/range", verbatim_doc_comment)]
-    pub ip_address: Ipv4AddrRange,
+    pub ip_address: Option<Ipv4AddrRange>,
 
     /// Find a client by session username.
     #[arg(short, long, value_name = "username")]
@@ -70,7 +66,7 @@ impl Args {
     pub fn buf(&self) -> Result<Vec<u8>, String>
     {
         let mut packet = self.clone();
-        packet.ip_address = Ipv4AddrRange(None);
+        packet.ip_address = None;
         match bincode::serialize(&packet) {
             Ok(bytes) => Ok(bytes),
             Err(_) => Err(String::from("Failed to serialize cli."))
@@ -110,7 +106,7 @@ fn parse_ipv4(ip_string: &str) -> Result<Ipv4AddrRange, String> {
         }
     };
     
-    Ok(Ipv4AddrRange(Some(targets)))
+    Ok(Ipv4AddrRange(targets))
 }
 
 fn comma_seperated(ip_string: &str, targets: &mut Vec<Ipv4Addr>) -> Result<(), String>
@@ -126,7 +122,7 @@ fn comma_seperated(ip_string: &str, targets: &mut Vec<Ipv4Addr>) -> Result<(), S
             targets.push(v);
             v.octets()
         },
-        Err(_) => return Err(format!("\n{ip_string} is not a valid ipv4 address. Use one of the patterns below."))
+        Err(_) => return Err(format!("\n{ip_string} is not a valid ipv4 address."))
     };
 
     for (i, s) in range.iter().enumerate()
@@ -134,7 +130,7 @@ fn comma_seperated(ip_string: &str, targets: &mut Vec<Ipv4Addr>) -> Result<(), S
         if i == 0 { continue; }
         match s.parse::<u8>() {
             Ok(v) => targets.push(Ipv4Addr::new(first[0], first[1], first[2], v)),
-            Err(_) => return Err(format!("\nThe ipv4 address ({ip_string}) provided is invalid. Use one of the patterns below."))
+            Err(_) => return Err(format!("\nThe ipv4 address ({ip_string}) provided is invalid."))
         }
     }
 
@@ -150,7 +146,7 @@ fn range_seperated(ip_string: &str, targets: &mut Vec<Ipv4Addr>) -> Result<(), S
     .unwrap()
     .parse::<Ipv4Addr>() {
         Ok(v) => v.octets(),
-        Err(_) => return Err(format!("\nThe ipv4 address ({ip_string}) provided is invalid. Use one of the patterns below."))
+        Err(_) => return Err(format!("\nThe ipv4 address ({ip_string}) provided is invalid."))
     };
 
     let start = range
@@ -170,5 +166,5 @@ fn range_seperated(ip_string: &str, targets: &mut Vec<Ipv4Addr>) -> Result<(), S
         return Ok(());
     }
 
-    return Err(format!("The 6 ipv4 address ({ip_string}) provided is invalid. Use one of the patterns below."))
+    return Err(format!("The 6 ipv4 address ({ip_string}) provided is invalid."))
 }

@@ -1,4 +1,6 @@
 use clap::Parser;
+use jutsu_core::cli::Ipv4AddrRange;
+use jutsu_core::ssh::deploy;
 use jutsu_core::{socket, cli, response::Response};
 use mpsc::Receiver;
 use std::io::{Write, Stdout};
@@ -7,6 +9,21 @@ use std::sync::{mpsc, Arc, Mutex};
 fn main() {
     let cli = cli::Args::parse();
     
+    if cli.ip_address.is_none() && cli.deploy_client.is_none() && cli.purge_client.is_none()
+    {
+        println!("Looks like you need some help\nCommand:\n         jutsu --help");
+        std::process::exit(0)
+    }
+
+    match cli.deploy_client {
+        None => {},
+        Some(_) =>
+        {
+            deploy();
+            std::process::exit(0)
+        }
+    }
+
     let socket = match socket::JutsuSocket::new(socket::SERVER_PORT) {
         Ok(socket) => socket,
         Err(e) =>
@@ -26,7 +43,7 @@ fn main() {
     let (timeout_pkts_tx, timeout_pkts_rx) = mpsc::channel::<usize>();
     let (timeout_byts_tx, timeout_byts_rx) = mpsc::channel::<usize>();
     
-    let transmitted = Arc::new(Mutex::new(cli.ip_address.len()));
+    let transmitted = Arc::new(Mutex::new(cli.ip_address.clone().unwrap_or(Ipv4AddrRange::empty()).len()));
 
     let exit_transmitted = transmitted.clone();
     let timeout_transmitted = transmitted.clone();
@@ -37,9 +54,12 @@ fn main() {
     match args {
         Ok(buf) =>
         {
-            cli.ip_address.foreach(|ip_address| {
-                socket.send(&buf, ip_address);
-            });
+            if let Some(addresses) = cli.ip_address
+            {
+                addresses.foreach(|ip_address| {
+                    socket.send(&buf, ip_address);
+                });
+            }
         },
         Err(e) =>
         {
