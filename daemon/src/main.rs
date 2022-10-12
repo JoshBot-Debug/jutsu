@@ -1,6 +1,6 @@
 use clap::Parser;
 use jutsu_core::cli::Ipv4AddrRange;
-use jutsu_core::ssh::deploy;
+use jutsu_core::ssh::{deploy, purge};
 use jutsu_core::{socket, cli, response::Response};
 use mpsc::Receiver;
 use std::io::{Write, Stdout};
@@ -17,9 +17,26 @@ fn main() {
 
     match cli.deploy_client {
         None => {},
-        Some(_) =>
+        Some(target) =>
         {
-            deploy();
+            if let Err(e) = deploy(target)
+            {
+                eprintln!("{e}");
+                std::process::exit(1)
+            }
+            std::process::exit(0)
+        }
+    }
+
+    match cli.purge_client {
+        None => {},
+        Some(target) =>
+        {
+            if let Err(e) = purge(target)
+            {
+                eprintln!("{e}");
+                std::process::exit(1)
+            }
             std::process::exit(0)
         }
     }

@@ -26,3 +26,6 @@ You can pass a single client, multiple clients or a range
 
 #### Purge
 	jutsu --purge-client joshua@192.168.1.1-254
+
+## Build client
+	cargo build --target x86_64-unknown-linux-musl --bin jutsu-client --release

@@ -41,7 +41,7 @@ impl Response
     {
         for sess in &self.session
         {
-            if sess.contains(username) {return  true};
+            if sess.to_lowercase().contains(&username.to_lowercase()) {return  true};
         }
         return false;
     }
@@ -50,7 +50,7 @@ impl Response
     {
         for host in &self.hostname
         {
-            if host.contains(hostname) {return  true};
+            if host.to_lowercase().contains(&hostname.to_lowercase()) {return  true};
         }
         return false;
     }
